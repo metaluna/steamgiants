@@ -3,6 +3,23 @@ apply plugin: 'java'
 sourceCompatibility = '1.7'
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
+// Test Structure
+// cf. http://selimober.com/blog/2014/01/24/separate-unit-and-integration-tests-using-gradle/
+sourceSets {
+    integTest {
+        java.srcDir file('src/integTest/java')
+        resources.srcDir file('src/integTest/resources')
+    }
+}
+
+task integTest(type: Test) {
+    testClassesDir = sourceSets.integTest.output.classesDir
+    classpath = sourceSets.integTest.runtimeClasspath
+}
+
+check.dependsOn -= integTest
+
+
 // NetBeans will automatically add "run" and "debug" tasks relying on the
 // "mainClass" property. You may however define the property prior executing
 // tasks by passing a "-PmainClass=<QUALIFIED_CLASS_NAME>" argument.
@@ -15,17 +32,24 @@ if (!hasProperty('mainClass')) {
 }
 
 repositories {
+    ivy {
+        url '~/Projekte/lib/assertj-swing'
+        layout 'maven'
+    }
     mavenCentral()
-    // You may define additional repositories, or even remove "mavenCentral()".
-    // Read more about repositories here:
-    //   http://www.gradle.org/docs/current/userguide/dependency_management.html#sec:repositories
 }
 
 dependencies {
-    // TODO: Add dependencies here ...
-    // You can read more about how to add dependency here:
-    //   http://www.gradle.org/docs/current/userguide/dependency_management.html#sec:how_to_declare_your_dependencies
     compile group: 'com.google.guava', name: 'guava', version: '17.0'
 
-    testCompile group: 'junit', name: 'junit', version: '4.10'
+    testCompile group: 'org.assertj', name: 'assertj-core', version: '1.6.1'
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+    testCompile group: 'org.mockito', name: 'mockito-all', version: '1.9.5'
+
+    integTestCompile sourceSets.main.output
+    integTestCompile configurations.testCompile
+    integTestCompile sourceSets.test.output
+    integTestCompile group: 'org.assertj', name: 'assertj-swing-junit-4.5', version: '1.0.0'
+    
+    integTestRuntime configurations.testRuntime
 }
